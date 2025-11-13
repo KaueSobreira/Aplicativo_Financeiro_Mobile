@@ -9,11 +9,17 @@ class MainApp extends StatelessWidget {
   const MainApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: ExpenseListPage(),
-    );
-  }
+  // Widget build(BuildContext context) {
+  //   return MaterialApp(
+  //     home: ExpenseListPage(),
+  //   );
+  // }
+
+  Widget build(BuildContext context) => Scaffold(
+    appBar: taskAppBar(),
+    floatingActionButton: taskAppFloatingActionButton(),
+    body: ExpenseListPage(),
+  );
 }
 
 class ExpenseListPage extends StatefulWidget {
@@ -223,20 +229,28 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
                 ),
               ),
             ),
-            ElevatedButton(
-              onPressed: () {
-                mostrarDialogCadastro();
-              },
-              child: Icon(Icons.add, size: 40, color: Colors.blue,),
-            ),
+            // ElevatedButton(
+            //   onPressed: () {
+            //     // mostrarDialogCadastro();
+            //   },
+            //   child: Icon(Icons.add, size: 40, color: Colors.blue,),
+            // ),
           ],
         ),
       ),
     );
   }
+  // Método que mostra o dialog de cadastr
+}
 
-  // Método que mostra o dialog de cadastro
-  void mostrarDialogCadastro() {
+AppBar taskAppBar() => AppBar(title: Center(child: Text("Lista de Despesas")));
+
+  FloatingActionButton taskAppFloatingActionButton() => FloatingActionButton(
+    onPressed: mostrarDialogCadastro(),
+    child: Icon(Icons.add, size: 40, color: Colors.blue,),
+  );
+
+mostrarDialogCadastro() {
     DateTime? dataSelecionada;
     final TextEditingController dataController = TextEditingController();
     String? categoriaSelecionada;
@@ -370,4 +384,3 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
       },
     );
   }
-}
