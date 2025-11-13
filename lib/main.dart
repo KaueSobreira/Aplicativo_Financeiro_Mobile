@@ -9,17 +9,16 @@ class MainApp extends StatelessWidget {
   const MainApp({super.key});
 
   @override
-  // Widget build(BuildContext context) {
-  //   return MaterialApp(
-  //     home: ExpenseListPage(),
-  //   );
-  // }
-
-  Widget build(BuildContext context) => Scaffold(
-    appBar: taskAppBar(),
-    floatingActionButton: taskAppFloatingActionButton(),
-    body: ExpenseListPage(),
-  );
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        appBar: taskAppBar(),
+        floatingActionButton: taskAppFloatingActionButton(),
+        body: ExpenseListPage(),
+      ),
+    );
+  }
 }
 
 class ExpenseListPage extends StatefulWidget {
@@ -246,141 +245,141 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
 AppBar taskAppBar() => AppBar(title: Center(child: Text("Lista de Despesas")));
 
   FloatingActionButton taskAppFloatingActionButton() => FloatingActionButton(
-    onPressed: mostrarDialogCadastro(),
+    onPressed: () {},
     child: Icon(Icons.add, size: 40, color: Colors.blue,),
   );
 
-mostrarDialogCadastro() {
-    DateTime? dataSelecionada;
-    final TextEditingController dataController = TextEditingController();
-    String? categoriaSelecionada;
+// mostrarDialogCadastro() {
+//     DateTime? dataSelecionada;
+//     final TextEditingController dataController = TextEditingController();
+//     String? categoriaSelecionada;
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("Nova Despesa"),
-          content: SizedBox(
-            width: 600,
-            height: 500,
-            child: Column(
-              // mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(height: 12,),
+//     showDialog(
+//       context: context,
+//       builder: (context) {
+//         return AlertDialog(
+//           title: Text("Nova Despesa"),
+//           content: SizedBox(
+//             width: 600,
+//             height: 500,
+//             child: Column(
+//               // mainAxisSize: MainAxisSize.min,
+//               children: [
+//                 SizedBox(height: 12,),
             
-                Text("Descrição da Despesa", 
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+//                 Text("Descrição da Despesa", 
+//                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+//                 ),
             
-                SizedBox(height: 12,),
+//                 SizedBox(height: 12,),
             
-                TextField(
-                  decoration: InputDecoration(hintText: "Descrição"),
-                ),
+//                 TextField(
+//                   decoration: InputDecoration(hintText: "Descrição"),
+//                 ),
             
-                SizedBox(height: 12,),
+//                 SizedBox(height: 12,),
             
-                Text("Valor", 
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+//                 Text("Valor", 
+//                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+//                 ),
             
-                SizedBox(height: 12,),
+//                 SizedBox(height: 12,),
             
-                TextField(
-                  decoration: InputDecoration(hintText: "Digite o Valor"),
-                ),
+//                 TextField(
+//                   decoration: InputDecoration(hintText: "Digite o Valor"),
+//                 ),
             
-                SizedBox(height: 12,),
+//                 SizedBox(height: 12,),
             
-                Text("Data de Vencimento", 
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+//                 Text("Data de Vencimento", 
+//                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+//                 ),
             
-                SizedBox(height: 12,),
+//                 SizedBox(height: 12,),
             
-                TextField(
-                  controller: dataController,
-                  decoration: InputDecoration(hintText: "Selecione a Data"),
-                  readOnly: true,
-                  onTap: () async {
-                    DateTime? dataEscolhida = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2100),
-                    );
+//                 TextField(
+//                   controller: dataController,
+//                   decoration: InputDecoration(hintText: "Selecione a Data"),
+//                   readOnly: true,
+//                   onTap: () async {
+//                     DateTime? dataEscolhida = await showDatePicker(
+//                       context: context,
+//                       initialDate: DateTime.now(),
+//                       firstDate: DateTime(2000),
+//                       lastDate: DateTime(2100),
+//                     );
                     
-                    if (dataEscolhida != null) {
-                      setState(() {
-                        dataSelecionada = dataEscolhida;
-                        dataController.text = "${dataEscolhida.day}/${dataEscolhida.month}/${dataEscolhida.year}";
-                      });
-                    }
-                  },
-                ),
+//                     if (dataEscolhida != null) {
+//                       setState(() {
+//                         dataSelecionada = dataEscolhida;
+//                         dataController.text = "${dataEscolhida.day}/${dataEscolhida.month}/${dataEscolhida.year}";
+//                       });
+//                     }
+//                   },
+//                 ),
             
-                SizedBox(height: 12,),
+//                 SizedBox(height: 12,),
             
-                Text("Categoria da Despesa", 
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+//                 Text("Categoria da Despesa", 
+//                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+//                 ),
             
-                SizedBox(height: 12,),
+//                 SizedBox(height: 12,),
             
-                DropdownButtonFormField<String>(
-                  initialValue: categoriaSelecionada,
-                  decoration: InputDecoration(
-                  hintText: "Selecione a Categoria",
-                  border: OutlineInputBorder(),
-                  ),
-                    items: [
-                      DropdownMenuItem(value: "Alimentação", child: Text("Alimentação")),
-                      DropdownMenuItem(value: "Transporte", child: Text("Transporte")),
-                      DropdownMenuItem(value: "Moradia", child: Text("Moradia")),
-                      DropdownMenuItem(value: "Saúde", child: Text("Saúde")),
-                      DropdownMenuItem(value: "Educação", child: Text("Educação")),
-                      DropdownMenuItem(value: "Lazer", child: Text("Lazer")),
-                      DropdownMenuItem(value: "Outros", child: Text("Outros")),
-                    ],
-                      onChanged: (valor) {
-                        setState(() {
-                          categoriaSelecionada = valor;
-                          });
-                        },
-                      ),
+//                 DropdownButtonFormField<String>(
+//                   initialValue: categoriaSelecionada,
+//                   decoration: InputDecoration(
+//                   hintText: "Selecione a Categoria",
+//                   border: OutlineInputBorder(),
+//                   ),
+//                     items: [
+//                       DropdownMenuItem(value: "Alimentação", child: Text("Alimentação")),
+//                       DropdownMenuItem(value: "Transporte", child: Text("Transporte")),
+//                       DropdownMenuItem(value: "Moradia", child: Text("Moradia")),
+//                       DropdownMenuItem(value: "Saúde", child: Text("Saúde")),
+//                       DropdownMenuItem(value: "Educação", child: Text("Educação")),
+//                       DropdownMenuItem(value: "Lazer", child: Text("Lazer")),
+//                       DropdownMenuItem(value: "Outros", child: Text("Outros")),
+//                     ],
+//                       onChanged: (valor) {
+//                         setState(() {
+//                           categoriaSelecionada = valor;
+//                           });
+//                         },
+//                       ),
             
-                SizedBox(height: 12,),
+//                 SizedBox(height: 12,),
             
-                Text("Anexar Comprovante", 
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+//                 Text("Anexar Comprovante", 
+//                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+//                 ),
             
-                SizedBox(height: 12),
+//                 SizedBox(height: 12),
             
-                ElevatedButton(
-                  onPressed: () async {
-                    await FilePicker.platform.pickFiles();
-                  },
-                  child: Text("Escolher Arquivo"),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text("Fechar"),
-            ),
-            TextButton(
-              onPressed: () {
-                // Navigator.of(context).pop();
-              },
-              child: Text("Cadastrar"),
-            ),
-          ],
-        );
-      },
-    );
-  }
+//                 ElevatedButton(
+//                   onPressed: () async {
+//                     await FilePicker.platform.pickFiles();
+//                   },
+//                   child: Text("Escolher Arquivo"),
+//                 ),
+//               ],
+//             ),
+//           ),
+//           actions: [
+//             TextButton(
+//               onPressed: () {
+//                 Navigator.of(context).pop();
+//               },
+//               child: Text("Fechar"),
+//             ),
+//             TextButton(
+//               onPressed: () {
+//                 // Navigator.of(context).pop();
+//               },
+//               child: Text("Cadastrar"),
+//             ),
+//           ],
+//         );
+//       },
+//     );
+//   }
