@@ -1,5 +1,5 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:month_picker_dialog/month_picker_dialog.dart';
 
 void main() {
   runApp(const MainApp());
@@ -12,11 +12,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        appBar: taskAppBar(),
-        floatingActionButton: taskAppFloatingActionButton(),
-        body: ExpenseListPage(),
-      ),
+      home: ExpenseListPage(),
     );
   }
 }
@@ -31,355 +27,212 @@ class ExpenseListPage extends StatefulWidget {
 class _ExpenseListPageState extends State<ExpenseListPage> {
   String? tipoFiltroSelecionado;
   DateTime? dataFiltagem;
+
   final TextEditingController dataControllerFiltragem = TextEditingController();
-  
+  final TextEditingController descricaoController = TextEditingController();
+
+  @override
+  void dispose() {
+    dataControllerFiltragem.dispose();
+    descricaoController.dispose();
+    super.dispose();
+  }
+
+  // Nomes dos meses para exibir no campo
+  String _mesNome(int mes) {
+    const nomes = [
+      "", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+      "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    ];
+    return nomes[mes];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
+      backgroundColor: Colors.grey[100],
+
+      appBar: AppBar(
+        title: const Center(child: Text("Lista de Despesas")),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {},
+        child: const Icon(Icons.add, size: 40, color: Colors.blue),
+      ),
+
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Column(
-              children: [
-                Text("Selecione o Tipo de Filtro"),
+
+            const Text(
+              "Selecione o Tipo de Filtro",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+
+            const SizedBox(height: 12),
+
             DropdownButtonFormField<String>(
               initialValue: tipoFiltroSelecionado,
-              decoration: InputDecoration(
-              hintText: "Tipo de Filtro",
-              border: OutlineInputBorder(),
+              decoration: const InputDecoration(
+                labelText: "Tipo de Filtro",
+                border: OutlineInputBorder(),
               ),
-                items: [
-                  DropdownMenuItem(value: "Por Mês", child: Text("Por Mês")),
-                  DropdownMenuItem(value: "Por Categoria", child: Text("Por Categoria")),
-                ],
-                  onChanged: (valor) {
-                    setState(() {
-                      tipoFiltroSelecionado = valor;
-                    });
-                  },
-                ),
+              items: const [
+                DropdownMenuItem(value: "Por Mês", child: Text("Por Mês")),
+                DropdownMenuItem(value: "Por Categoria", child: Text("Por Categoria")),
               ],
+              onChanged: (valor) {
+                setState(() {
+                  tipoFiltroSelecionado = valor;
+                  dataControllerFiltragem.clear();
+                  descricaoController.clear();
+                });
+              },
             ),
-            tipoFiltroSelecionado == "Por Mês"
-              ? TextField(
-                  controller: dataControllerFiltragem,
-                  decoration: const InputDecoration(hintText: "Selecione a Data"),
-                  readOnly: true,
-                  onTap: () async {
-                    DateTime? dataEscolhida = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2100),
-                    );
 
-                    if (dataEscolhida != null) {
-                      setState(() {
-                        dataFiltagem = dataEscolhida;
-                        dataControllerFiltragem.text =
-                            "${dataEscolhida.day}/${dataEscolhida.month}/${dataEscolhida.year}";
-                      });
-                    }
-                  },
-                )
-              : TextField(
-                  decoration: InputDecoration(hintText: "Descrição"),
+            const SizedBox(height: 20),
+
+            // ----------- FILTRO DEPENDENTE DO TIPO -----------
+            if (tipoFiltroSelecionado == "Por Mês")
+              TextField(
+                controller: dataControllerFiltragem,
+                decoration: const InputDecoration(
+                  labelText: "Selecione o Mês",
+                  border: OutlineInputBorder(),
+                  suffixIcon: Icon(Icons.calendar_today),
                 ),
-            Card(
-              color: Colors.black,  // Margem externa
-              child: Container(         
-                constraints: BoxConstraints(
-                  minWidth: 1000,
-                ),    // Precisa de um child para mostrar conteúdo
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    Text(
-                      'Total Despesas em Aberto', 
-                       style: TextStyle(
-                        color: Colors.white, 
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20
-                        ),
-                    ),
-                    Text(
-                      '10.000,00', 
-                       style: TextStyle(
-                        color: Colors.red, 
-                        fontWeight: FontWeight.w500,
-                        fontSize: 18
-                        ),
-                    ),
-                  ],
+                readOnly: true,
+                onTap: () async {
+                  DateTime now = DateTime.now();
+
+                  final mesSelecionado = await showMonthPicker(
+                    context: context,
+                    initialDate: now,
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime(2100),
+                  );
+
+                  if (mesSelecionado != null) {
+                    setState(() {
+                      dataFiltagem = mesSelecionado;
+
+                      dataControllerFiltragem.text =
+                          "${_mesNome(mesSelecionado.month)} / ${mesSelecionado.year}";
+                    });
+                  }
+                },
+              )
+
+            else if (tipoFiltroSelecionado == "Por Categoria")
+              TextField(
+                controller: descricaoController,
+                decoration: const InputDecoration(
+                  labelText: "Descrição da Categoria",
+                  border: OutlineInputBorder(),
                 ),
               ),
+
+            const SizedBox(height: 30),
+
+            // ----------- CARDS DE RESUMO -----------
+            _buildResumoCard(
+              titulo: "Total Despesas em Aberto",
+              valor: "10.000,00",
+              corValor: Colors.red,
             ),
+
+            _buildResumoCard(
+              titulo: "Total Despesas já pagas",
+              valor: "5.000,00",
+              corValor: Colors.green,
+            ),
+
+            _buildResumoCard(
+              titulo: "Categoria com mais Gastos",
+              valor: "Alimentação",
+              corValor: Colors.white,
+            ),
+
+            _buildResumoCard(
+              titulo: "Total Despesas do Próximo Mês",
+              valor: "35.000,00",
+              corValor: Colors.white,
+            ),
+
+            const SizedBox(height: 10),
+
+            // ----------- LISTAGEM -----------
             Card(
-              color: Colors.black,  // Margem externa
+              color: Colors.black87,
               child: Container(
-                constraints: BoxConstraints(
-                  minWidth: 1000,
-                ),             // Precisa de um child para mostrar conteúdo
-                padding: EdgeInsets.all(16),
-                child: Column(
+                width: double.infinity,
+                height: 350,
+                padding: const EdgeInsets.all(16),
+                child: const Column(
                   children: [
                     Text(
-                      'Total Despesas já pagas', 
-                       style: TextStyle(
-                        color: Colors.white, 
+                      'Listagem de Despesas',
+                      style: TextStyle(
+                        color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 20),
+                        fontSize: 20,
+                      ),
                     ),
+                    SizedBox(height: 20),
                     Text(
-                      '5.000,00', 
-                       style: TextStyle(
-                        color: Colors.green, 
-                        fontWeight: FontWeight.w500,
-                        fontSize: 18
-                        ),
+                      'Aqui vai ser a ListView',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
-            Card(
-              color: Colors.black,  // Margem externa
-              child: Container(
-                constraints: BoxConstraints(
-                  minWidth: 1000,
-                ),             // Precisa de um child para mostrar conteúdo
-                padding: EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    Text(
-                      'Categoria com mais Gastos', 
-                       style: TextStyle(
-                        color: Colors.white, 
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20),
-                    ),
-                    Text(
-                      'Alimentação', 
-                       style: TextStyle(
-                        color: Colors.white, 
-                        fontWeight: FontWeight.w500,
-                        fontSize: 18
-                        ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Card(
-              color: Colors.black,  // Margem externa
-              child: Container(
-                constraints: BoxConstraints(
-                  minWidth: 1000,
-                ),             // Precisa de um child para mostrar conteúdo
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    Text(
-                      'Total Despesas do Próximo Mês', 
-                       style: TextStyle(
-                        color: Colors.white, 
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20),
-                    ),
-                    Text(
-                      '35.000,00', 
-                       style: TextStyle(
-                        color: Colors.white, 
-                        fontWeight: FontWeight.w500,
-                        fontSize: 18
-                        ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Card(
-              color: Colors.black,  // Margem externa
-              child: Container(
-                constraints: BoxConstraints(
-                  minWidth: 1000,
-                  minHeight: 350,
-                ),             // Precisa de um child para mostrar conteúdo
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    Text(
-                      'Listagem de Despesas', 
-                       style: TextStyle(
-                        color: Colors.white, 
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20),
-                    ),
-                    Text(
-                      'Aqui vai ser a List View', 
-                       style: TextStyle(
-                        color: Colors.white, 
-                        fontWeight: FontWeight.w500,
-                        fontSize: 18
-                        ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            // ElevatedButton(
-            //   onPressed: () {
-            //     // mostrarDialogCadastro();
-            //   },
-            //   child: Icon(Icons.add, size: 40, color: Colors.blue,),
-            // ),
+
+            const SizedBox(height: 50),
           ],
         ),
       ),
     );
   }
-  // Método que mostra o dialog de cadastr
+
+  Widget _buildResumoCard({
+    required String titulo,
+    required String valor,
+    required Color corValor,
+  }) {
+    return Card(
+      color: Colors.black87,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              titulo,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              valor,
+              style: TextStyle(
+                color: corValor,
+                fontWeight: FontWeight.w500,
+                fontSize: 18,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
-
-AppBar taskAppBar() => AppBar(title: Center(child: Text("Lista de Despesas")));
-
-  FloatingActionButton taskAppFloatingActionButton() => FloatingActionButton(
-    onPressed: () {},
-    child: Icon(Icons.add, size: 40, color: Colors.blue,),
-  );
-
-// mostrarDialogCadastro() {
-//     DateTime? dataSelecionada;
-//     final TextEditingController dataController = TextEditingController();
-//     String? categoriaSelecionada;
-
-//     showDialog(
-//       context: context,
-//       builder: (context) {
-//         return AlertDialog(
-//           title: Text("Nova Despesa"),
-//           content: SizedBox(
-//             width: 600,
-//             height: 500,
-//             child: Column(
-//               // mainAxisSize: MainAxisSize.min,
-//               children: [
-//                 SizedBox(height: 12,),
-            
-//                 Text("Descrição da Despesa", 
-//                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-//                 ),
-            
-//                 SizedBox(height: 12,),
-            
-//                 TextField(
-//                   decoration: InputDecoration(hintText: "Descrição"),
-//                 ),
-            
-//                 SizedBox(height: 12,),
-            
-//                 Text("Valor", 
-//                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-//                 ),
-            
-//                 SizedBox(height: 12,),
-            
-//                 TextField(
-//                   decoration: InputDecoration(hintText: "Digite o Valor"),
-//                 ),
-            
-//                 SizedBox(height: 12,),
-            
-//                 Text("Data de Vencimento", 
-//                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-//                 ),
-            
-//                 SizedBox(height: 12,),
-            
-//                 TextField(
-//                   controller: dataController,
-//                   decoration: InputDecoration(hintText: "Selecione a Data"),
-//                   readOnly: true,
-//                   onTap: () async {
-//                     DateTime? dataEscolhida = await showDatePicker(
-//                       context: context,
-//                       initialDate: DateTime.now(),
-//                       firstDate: DateTime(2000),
-//                       lastDate: DateTime(2100),
-//                     );
-                    
-//                     if (dataEscolhida != null) {
-//                       setState(() {
-//                         dataSelecionada = dataEscolhida;
-//                         dataController.text = "${dataEscolhida.day}/${dataEscolhida.month}/${dataEscolhida.year}";
-//                       });
-//                     }
-//                   },
-//                 ),
-            
-//                 SizedBox(height: 12,),
-            
-//                 Text("Categoria da Despesa", 
-//                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-//                 ),
-            
-//                 SizedBox(height: 12,),
-            
-//                 DropdownButtonFormField<String>(
-//                   initialValue: categoriaSelecionada,
-//                   decoration: InputDecoration(
-//                   hintText: "Selecione a Categoria",
-//                   border: OutlineInputBorder(),
-//                   ),
-//                     items: [
-//                       DropdownMenuItem(value: "Alimentação", child: Text("Alimentação")),
-//                       DropdownMenuItem(value: "Transporte", child: Text("Transporte")),
-//                       DropdownMenuItem(value: "Moradia", child: Text("Moradia")),
-//                       DropdownMenuItem(value: "Saúde", child: Text("Saúde")),
-//                       DropdownMenuItem(value: "Educação", child: Text("Educação")),
-//                       DropdownMenuItem(value: "Lazer", child: Text("Lazer")),
-//                       DropdownMenuItem(value: "Outros", child: Text("Outros")),
-//                     ],
-//                       onChanged: (valor) {
-//                         setState(() {
-//                           categoriaSelecionada = valor;
-//                           });
-//                         },
-//                       ),
-            
-//                 SizedBox(height: 12,),
-            
-//                 Text("Anexar Comprovante", 
-//                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-//                 ),
-            
-//                 SizedBox(height: 12),
-            
-//                 ElevatedButton(
-//                   onPressed: () async {
-//                     await FilePicker.platform.pickFiles();
-//                   },
-//                   child: Text("Escolher Arquivo"),
-//                 ),
-//               ],
-//             ),
-//           ),
-//           actions: [
-//             TextButton(
-//               onPressed: () {
-//                 Navigator.of(context).pop();
-//               },
-//               child: Text("Fechar"),
-//             ),
-//             TextButton(
-//               onPressed: () {
-//                 // Navigator.of(context).pop();
-//               },
-//               child: Text("Cadastrar"),
-//             ),
-//           ],
-//         );
-//       },
-//     );
-//   }
