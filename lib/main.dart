@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:month_picker_dialog/month_picker_dialog.dart';
 
 void main() {
@@ -38,7 +39,6 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
     super.dispose();
   }
 
-  // Nomes dos meses para exibir no campo
   String _mesNome(int mes) {
     const nomes = [
       "", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -46,6 +46,132 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
     ];
     return nomes[mes];
   }
+
+ void mostrarDialogCadastro() {
+  DateTime? dataSelecionada;
+  final TextEditingController dataController = TextEditingController();
+  String? categoriaSelecionada;
+
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text("Nova Despesa"),
+        content: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min, 
+              children: [
+                const SizedBox(height: 12),
+                const Text(
+                  "Descrição da Despesa",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  decoration: const InputDecoration(hintText: "Descrição"),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  "Valor",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                  decoration:
+                      const InputDecoration(hintText: "Digite o Valor"),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  "Data de Vencimento",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: dataController,
+                  decoration:
+                      const InputDecoration(hintText: "Selecione a Data"),
+                  readOnly: true,
+                  onTap: () async {
+                    DateTime? dataEscolhida = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                    );
+                    if (dataEscolhida != null) {
+                      setState(() {
+                        dataSelecionada = dataEscolhida;
+                        dataController.text =
+                            "${dataEscolhida.day}/${dataEscolhida.month}/${dataEscolhida.year}";
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  "Categoria da Despesa",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: categoriaSelecionada,
+                  decoration: const InputDecoration(
+                    hintText: "Selecione a Categoria",
+                    border: OutlineInputBorder(),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                        value: "Alimentação", child: Text("Alimentação")),
+                    DropdownMenuItem(
+                        value: "Transporte", child: Text("Transporte")),
+                    DropdownMenuItem(value: "Moradia", child: Text("Moradia")),
+                    DropdownMenuItem(value: "Saúde", child: Text("Saúde")),
+                    DropdownMenuItem(
+                        value: "Educação", child: Text("Educação")),
+                    DropdownMenuItem(value: "Lazer", child: Text("Lazer")),
+                    DropdownMenuItem(value: "Outros", child: Text("Outros")),
+                  ],
+                  onChanged: (valor) {
+                    categoriaSelecionada = valor;
+                  },
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  "Anexar Comprovante",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: () async {
+                    await FilePicker.platform.pickFiles();
+                  },
+                  child: const Text("Escolher Arquivo"),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("Fechar"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text("Cadastrar"),
+          ),
+        ],
+      );
+    },
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -55,8 +181,11 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
       appBar: AppBar(
         title: const Center(child: Text("Lista de Despesas")),
       ),
+
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          mostrarDialogCadastro(); 
+        },
         child: const Icon(Icons.add, size: 40, color: Colors.blue),
       ),
 
@@ -94,7 +223,6 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
 
             const SizedBox(height: 20),
 
-            // ----------- FILTRO DEPENDENTE DO TIPO -----------
             if (tipoFiltroSelecionado == "Por Mês")
               TextField(
                 controller: dataControllerFiltragem,
@@ -117,7 +245,6 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
                   if (mesSelecionado != null) {
                     setState(() {
                       dataFiltagem = mesSelecionado;
-
                       dataControllerFiltragem.text =
                           "${_mesNome(mesSelecionado.month)} / ${mesSelecionado.year}";
                     });
@@ -136,7 +263,6 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
 
             const SizedBox(height: 30),
 
-            // ----------- CARDS DE RESUMO -----------
             _buildResumoCard(
               titulo: "Total Despesas em Aberto",
               valor: "10.000,00",
@@ -163,7 +289,6 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
 
             const SizedBox(height: 10),
 
-            // ----------- LISTAGEM -----------
             Card(
               color: Colors.black87,
               child: Container(
