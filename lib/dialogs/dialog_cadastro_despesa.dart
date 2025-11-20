@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
 
 void mostrarDialogCadastro(BuildContext context) {
   DateTime? dataSelecionada;
@@ -87,12 +88,35 @@ void mostrarDialogCadastro(BuildContext context) {
                 const Text("Comprovante",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
-                ElevatedButton(
-                  onPressed: () {
-                    FilePicker.platform.pickFiles();
-                  },
-                  child: const Text("Escolher Arquivo"),
+
+                // -------------------- BOTÕES DE ANEXAR E TIRAR FOTO --------------------
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.photo_library),
+                      label: const Text("Anexar"),
+                      onPressed: () async {
+                        FilePicker.platform.pickFiles();
+                      },
+                    ),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.camera_alt),
+                      label: const Text("Foto"),
+                      onPressed: () async {
+                        final ImagePicker picker = ImagePicker();
+                        final XFile? foto =
+                            await picker.pickImage(source: ImageSource.camera);
+
+                        // Se quiser depois salvar esse caminho, você coloca aqui
+                        if (foto != null) {
+                          print("FOTO TIRADA: ${foto.path}");
+                        }
+                      },
+                    ),
+                  ],
                 ),
+                // -----------------------------------------------------------------------
               ],
             ),
           ),
