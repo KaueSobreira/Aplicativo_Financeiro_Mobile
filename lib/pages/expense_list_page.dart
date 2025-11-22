@@ -237,13 +237,14 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
                               ),
                               trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white54, size: 16),
                               
-                              onTap: () {
-                                Navigator.push(
+                              onTap: () async {
+                                await Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => DespesaDetalhePage(despesa: despesa),
                                   ),
                                 );
+                                _buscarDadosDoBanco();
                               },
                             );
                           },

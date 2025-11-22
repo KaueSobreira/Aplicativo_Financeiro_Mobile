@@ -1,17 +1,78 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/despesa.dart';
+import '../database/despesa_dao.dart';
+import '../dialogs/dialog_cadastro_despesa.dart';
 
-class DespesaDetalhePage extends StatelessWidget {
+class DespesaDetalhePage extends StatefulWidget {
   final Despesa despesa;
 
   const DespesaDetalhePage({super.key, required this.despesa});
+
+  @override
+  State<DespesaDetalhePage> createState() => _DespesaDetalhePageState();
+}
+
+class _DespesaDetalhePageState extends State<DespesaDetalhePage> {
+  late Despesa _despesaAtual;
+  final DespesaDAO _dao = DespesaDAO();
+
+  @override
+  void initState() {
+    super.initState();
+    _despesaAtual = widget.despesa;
+  }
+
+  // Função para excluir
+  Future<void> _confirmarExclusao() async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Excluir Despesa"),
+        content: const Text("Tem certeza que deseja excluir esta despesa?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancelar")),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Excluir", style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+
+    if (confirmar == true) {
+      await _dao.excluir(_despesaAtual.id!);
+      if (!mounted) return;
+      // Retorna 'true' para avisar a lista que algo mudou
+      Navigator.pop(context, true);
+    }
+  }
+
+  // Função para editar
+  Future<void> _editarDespesa() async {
+    await mostrarDialogCadastro(context, despesaParaEditar: _despesaAtual);
+    
+    // Recarrega o objeto do banco para atualizar a tela
+    final listaAtualizada = await _dao.listar();
+    final despesaRecarregada = listaAtualizada.firstWhere((d) => d.id == _despesaAtual.id, orElse: () => _despesaAtual);
+
+    setState(() {
+      _despesaAtual = despesaRecarregada;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Detalhes da Despesa"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit, color: Colors.blue),
+            onPressed: _editarDespesa,
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete, color: Colors.red),
+            onPressed: _confirmarExclusao,
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -20,13 +81,11 @@ class DespesaDetalhePage extends StatelessWidget {
             Container(
               height: 300,
               color: Colors.grey[300],
-              child: despesa.comprovante != null && despesa.comprovante!.isNotEmpty
+              child: _despesaAtual.comprovante != null && _despesaAtual.comprovante!.isNotEmpty
                   ? Image.file(
-                      File(despesa.comprovante!),
+                      File(_despesaAtual.comprovante!),
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Center(child: Text("Erro ao carregar imagem"));
-                      },
+                      errorBuilder: (_, __, ___) => const Center(child: Text("Erro ao carregar imagem")),
                     )
                   : const Center(
                       child: Column(
@@ -46,13 +105,13 @@ class DespesaDetalhePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildInfoRow("Descrição", despesa.descricao, isBold: true),
+                  _buildInfoRow("Descrição", _despesaAtual.descricao, isBold: true),
                   const Divider(),
-                  _buildInfoRow("Valor", "R\$ ${despesa.valor.toStringAsFixed(2)}", color: Colors.red, isBold: true),
+                  _buildInfoRow("Valor", "R\$ ${_despesaAtual.valor.toStringAsFixed(2)}", color: Colors.red, isBold: true),
                   const Divider(),
-                  _buildInfoRow("Categoria", despesa.categoria),
+                  _buildInfoRow("Categoria", _despesaAtual.categoria),
                   const Divider(),
-                  _buildInfoRow("Data de Vencimento", despesa.dataVencimento),
+                  _buildInfoRow("Data de Vencimento", _despesaAtual.dataVencimento),
                 ],
               ),
             ),

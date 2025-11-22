@@ -4,20 +4,39 @@ import 'package:image_picker/image_picker.dart';
 import '../models/despesa.dart';
 import '../database/despesa_dao.dart';
 
-Future<void> mostrarDialogCadastro(BuildContext context) {
+// Adicionado parâmetro opcional despesaParaEditar
+Future<void> mostrarDialogCadastro(BuildContext context, {Despesa? despesaParaEditar}) {
   DateTime? dataSelecionada;
+  
   final descricaoController = TextEditingController();
   final valorController = TextEditingController();
   final dataController = TextEditingController();
+  
   String? categoriaSelecionada;
   String? caminhoComprovante;
+  
   final dao = DespesaDAO();
+
+  // -- Lógica de Preenchimento para Edição --
+  if (despesaParaEditar != null) {
+    descricaoController.text = despesaParaEditar.descricao;
+    valorController.text = despesaParaEditar.valor.toString();
+    dataController.text = despesaParaEditar.dataVencimento;
+    categoriaSelecionada = despesaParaEditar.categoria;
+    caminhoComprovante = despesaParaEditar.comprovante;
+    
+    // Converter string de data para objeto DateTime para validação interna se necessário
+    try {
+      final parts = despesaParaEditar.dataVencimento.split('/');
+      dataSelecionada = DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
+    } catch (_) {}
+  }
 
   return showDialog(
     context: context,
     builder: (context) {
       return AlertDialog(
-        title: const Text("Nova Despesa"),
+        title: Text(despesaParaEditar == null ? "Nova Despesa" : "Editar Despesa"),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -40,7 +59,7 @@ Future<void> mostrarDialogCadastro(BuildContext context) {
                 onTap: () async {
                   DateTime? escolha = await showDatePicker(
                     context: context,
-                    initialDate: DateTime.now(),
+                    initialDate: dataSelecionada ?? DateTime.now(),
                     firstDate: DateTime(2000),
                     lastDate: DateTime(2100),
                   );
@@ -52,7 +71,11 @@ Future<void> mostrarDialogCadastro(BuildContext context) {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                decoration: const InputDecoration(hintText: "Categoria", border: OutlineInputBorder()),
+                value: categoriaSelecionada, // Importante para mostrar o valor atual
+                decoration: const InputDecoration(
+                  hintText: "Categoria",
+                  border: OutlineInputBorder(),
+                ),
                 items: const [
                   DropdownMenuItem(value: "Alimentação", child: Text("Alimentação")),
                   DropdownMenuItem(value: "Transporte", child: Text("Transporte")),
@@ -65,7 +88,7 @@ Future<void> mostrarDialogCadastro(BuildContext context) {
                 onChanged: (valor) => categoriaSelecionada = valor,
               ),
               const SizedBox(height: 12),
-               Row(
+              Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton.icon(
@@ -93,23 +116,31 @@ Future<void> mostrarDialogCadastro(BuildContext context) {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Fechar")),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
           TextButton(
-            child: const Text("Cadastrar"),
+            child: Text(despesaParaEditar == null ? "Cadastrar" : "Salvar"),
             onPressed: () async {
-              if (descricaoController.text.isEmpty || valorController.text.isEmpty || dataSelecionada == null || categoriaSelecionada == null) {
+              if (descricaoController.text.isEmpty || valorController.text.isEmpty || dataController.text.isEmpty || categoriaSelecionada == null) {
                 return;
               }
-              final novaDespesa = Despesa(
+
+              final despesa = Despesa(
+                id: despesaParaEditar?.id, // Mantém o ID se for edição
                 descricao: descricaoController.text,
                 valor: double.tryParse(valorController.text) ?? 0,
                 dataVencimento: dataController.text,
                 categoria: categoriaSelecionada!,
                 comprovante: caminhoComprovante,
               );
-              await dao.inserir(novaDespesa);
+
+              if (despesaParaEditar == null) {
+                await dao.inserir(despesa);
+              } else {
+                await dao.atualizar(despesa);
+              }
+
               if (!context.mounted) return;
-              Navigator.pop(context); 
+              Navigator.pop(context);
             },
           ),
         ],
