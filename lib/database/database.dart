@@ -32,7 +32,7 @@ class AppDatabase {
         valor REAL,
         dataVencimento TEXT,
         categoria TEXT,
-        comprovante TEXT  -- Nome corrigido para bater com o model
+        comprovante TEXT
       )
     ''');
   }

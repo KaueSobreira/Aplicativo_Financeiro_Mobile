@@ -4,19 +4,18 @@ import 'package:image_picker/image_picker.dart';
 import '../models/despesa.dart';
 import '../database/despesa_dao.dart';
 
-void mostrarDialogCadastro(BuildContext context) {
+// Alterado para retornar Future
+Future<void> mostrarDialogCadastro(BuildContext context) {
   DateTime? dataSelecionada;
-
   final descricaoController = TextEditingController();
   final valorController = TextEditingController();
   final dataController = TextEditingController();
-
   String? categoriaSelecionada;
   String? caminhoComprovante;
-
   final dao = DespesaDAO();
 
-  showDialog(
+  // Adicionado 'return' aqui
+  return showDialog(
     context: context,
     builder: (context) {
       return AlertDialog(
@@ -30,14 +29,12 @@ void mostrarDialogCadastro(BuildContext context) {
                 decoration: const InputDecoration(hintText: "Descrição"),
               ),
               const SizedBox(height: 12),
-
               TextField(
                 controller: valorController,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(hintText: "Valor"),
               ),
               const SizedBox(height: 12),
-
               TextField(
                 controller: dataController,
                 decoration: const InputDecoration(hintText: "Data de Vencimento"),
@@ -49,21 +46,15 @@ void mostrarDialogCadastro(BuildContext context) {
                     firstDate: DateTime(2000),
                     lastDate: DateTime(2100),
                   );
-
                   if (escolha != null) {
                     dataSelecionada = escolha;
-                    dataController.text =
-                        "${escolha.day}/${escolha.month}/${escolha.year}";
+                    dataController.text = "${escolha.day}/${escolha.month}/${escolha.year}";
                   }
                 },
               ),
               const SizedBox(height: 12),
-
               DropdownButtonFormField<String>(
-                decoration: const InputDecoration(
-                  hintText: "Categoria",
-                  border: OutlineInputBorder(),
-                ),
+                decoration: const InputDecoration(hintText: "Categoria", border: OutlineInputBorder()),
                 items: const [
                   DropdownMenuItem(value: "Alimentação", child: Text("Alimentação")),
                   DropdownMenuItem(value: "Transporte", child: Text("Transporte")),
@@ -75,9 +66,9 @@ void mostrarDialogCadastro(BuildContext context) {
                 ],
                 onChanged: (valor) => categoriaSelecionada = valor,
               ),
+              // ... Botões de anexo mantidos iguais ...
               const SizedBox(height: 12),
-
-              Row(
+               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton.icon(
@@ -105,20 +96,13 @@ void mostrarDialogCadastro(BuildContext context) {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Fechar"),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Fechar")),
           TextButton(
             child: const Text("Cadastrar"),
             onPressed: () async {
-              if (descricaoController.text.isEmpty ||
-                  valorController.text.isEmpty ||
-                  dataSelecionada == null ||
-                  categoriaSelecionada == null) {
+              if (descricaoController.text.isEmpty || valorController.text.isEmpty || dataSelecionada == null || categoriaSelecionada == null) {
                 return;
               }
-
               final novaDespesa = Despesa(
                 descricao: descricaoController.text,
                 valor: double.tryParse(valorController.text) ?? 0,
@@ -126,11 +110,9 @@ void mostrarDialogCadastro(BuildContext context) {
                 categoria: categoriaSelecionada!,
                 comprovante: caminhoComprovante,
               );
-
               await dao.inserir(novaDespesa);
-
               if (!context.mounted) return;
-              Navigator.pop(context);
+              Navigator.pop(context); // Fecha o dialog
             },
           ),
         ],
