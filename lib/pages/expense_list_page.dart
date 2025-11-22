@@ -7,6 +7,7 @@ import '../dialogs/dialog_cadastro_despesa.dart';
 import '../database/despesa_dao.dart';
 import '../models/despesa.dart';
 import 'despesa_detalhe_page.dart';
+import '../services/gerador_pdf.dart';
 
 class ExpenseListPage extends StatefulWidget {
   const ExpenseListPage({super.key});
@@ -56,7 +57,6 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
       temp = temp.where((d) {
         try {
           final dataDespesa = _formatadorData.parse(d.dataVencimento);
-          
           return dataDespesa.month == dataFiltragem!.month && 
                  dataDespesa.year == dataFiltragem!.year;
         } catch (e) {
@@ -100,8 +100,27 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      appBar: AppBar(title: const Center(child: Text("Lista de Despesas"))),
       
+      appBar: AppBar(
+        title: const Text("Lista de Despesas"),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.print),
+            tooltip: "Gerar PDF",
+            onPressed: () {
+              if (_listaExibida.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Sem dados para imprimir")),
+                );
+                return;
+              }  
+              GeradorPdf.gerarRelatorio(_listaExibida);
+            },
+          ),
+        ],
+      ),
+
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           await mostrarDialogCadastro(context);
