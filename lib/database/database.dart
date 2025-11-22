@@ -9,7 +9,6 @@ class AppDatabase {
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-
     _database = await _initDB("despesas.db");
     return _database!;
   }
@@ -33,7 +32,7 @@ class AppDatabase {
         valor REAL,
         dataVencimento TEXT,
         categoria TEXT,
-        caminhoComprovante TEXT
+        comprovante TEXT  -- Nome corrigido para bater com o model
       )
     ''');
   }
