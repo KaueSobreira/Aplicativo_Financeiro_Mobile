@@ -14,48 +14,90 @@ class ExpenseListPage extends StatefulWidget {
 
 class _ExpenseListPageState extends State<ExpenseListPage> {
   String? tipoFiltroSelecionado;
-  DateTime? dataFiltagem;
-  
+  DateTime? dataFiltragem;
+  String? categoriaFiltroSelecionada;
+
   final TextEditingController dataControllerFiltragem = TextEditingController();
-  final TextEditingController descricaoController = TextEditingController();
   
-  // Variáveis para armazenar dados do banco
-  List<Despesa> _listaDespesas = [];
+  List<Despesa> _todasDespesas = [];
+  List<Despesa> _listaExibida = [];
   final DespesaDAO _dao = DespesaDAO();
-  double _totalDespesas = 0.0;
+  double _totalExibido = 0.0;
+
+  final List<String> _categorias = [
+    "Alimentação",
+    "Transporte",
+    "Moradia",
+    "Saúde",
+    "Educação",
+    "Lazer",
+    "Outros"
+  ];
 
   @override
   void initState() {
     super.initState();
-    _atualizarDados(); // Carrega os dados ao iniciar
+    _buscarDadosDoBanco();
   }
 
-  // Função que busca no banco e atualiza a tela
-  Future<void> _atualizarDados() async {
+  Future<void> _buscarDadosDoBanco() async {
     final lista = await _dao.listar();
-    
-    // Lógica simples de soma para o card de resumo
+    setState(() {
+      _todasDespesas = lista;
+      _aplicarFiltros();
+    });
+  }
+
+  void _aplicarFiltros() {
+    List<Despesa> temp = List.from(_todasDespesas);
+
+    if (tipoFiltroSelecionado == "Por Mês" && dataFiltragem != null) {
+      temp = temp.where((d) {
+        try {
+          final parts = d.dataVencimento.split('/');
+          final mes = int.parse(parts[1]);
+          final ano = int.parse(parts[2]);
+          return mes == dataFiltragem!.month && ano == dataFiltragem!.year;
+        } catch (e) {
+          return false;
+        }
+      }).toList();
+    } else if (tipoFiltroSelecionado == "Por Categoria" && categoriaFiltroSelecionada != null) {
+      temp = temp.where((d) => d.categoria == categoriaFiltroSelecionada).toList();
+    }
+
     double soma = 0;
-    for (var d in lista) {
+    for (var d in temp) {
       soma += d.valor;
     }
 
     setState(() {
-      _listaDespesas = lista;
-      _totalDespesas = soma;
+      _listaExibida = temp;
+      _totalExibido = soma;
     });
   }
 
   @override
   void dispose() {
     dataControllerFiltragem.dispose();
-    descricaoController.dispose();
     super.dispose();
   }
 
   String _mesNome(int mes) {
     const nomes = ["", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
     return nomes[mes];
+  }
+
+  IconData _getIconeCategoria(String categoria) {
+    switch (categoria) {
+      case "Alimentação": return Icons.restaurant;
+      case "Transporte": return Icons.directions_car;
+      case "Moradia": return Icons.home;
+      case "Saúde": return Icons.local_hospital;
+      case "Educação": return Icons.school;
+      case "Lazer": return Icons.beach_access;
+      default: return Icons.attach_money;
+    }
   }
 
   @override
@@ -66,10 +108,8 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
       
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          // O 'await' aqui espera o dialog fechar antes de continuar
           await mostrarDialogCadastro(context);
-          // Quando fecha, atualiza a lista
-          _atualizarDados();
+          _buscarDadosDoBanco();
         },
         child: const Icon(Icons.add, size: 40, color: Colors.blue),
       ),
@@ -79,13 +119,14 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ... Seção de Filtros (mantida igual) ...
             const Text("Selecione o Tipo de Filtro", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
+            
             DropdownButtonFormField<String>(
-              initialValue: tipoFiltroSelecionado,
+              value: tipoFiltroSelecionado,
               decoration: const InputDecoration(labelText: "Tipo de Filtro", border: OutlineInputBorder()),
               items: const [
+                DropdownMenuItem(value: "Todos", child: Text("Todos")),
                 DropdownMenuItem(value: "Por Mês", child: Text("Por Mês")),
                 DropdownMenuItem(value: "Por Categoria", child: Text("Por Categoria")),
               ],
@@ -93,11 +134,15 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
                 setState(() {
                   tipoFiltroSelecionado = valor;
                   dataControllerFiltragem.clear();
-                  descricaoController.clear();
+                  dataFiltragem = null;
+                  categoriaFiltroSelecionada = null;
+                  _aplicarFiltros();
                 });
               },
             ),
+            
             const SizedBox(height: 20),
+
             if (tipoFiltroSelecionado == "Por Mês")
               TextField(
                 controller: dataControllerFiltragem,
@@ -113,41 +158,52 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
                   );
                   if (mesSelecionado != null) {
                     setState(() {
-                      dataFiltagem = mesSelecionado;
+                      dataFiltragem = mesSelecionado;
                       dataControllerFiltragem.text = "${_mesNome(mesSelecionado.month)} / ${mesSelecionado.year}";
+                      _aplicarFiltros();
                     });
                   }
                 },
               )
             else if (tipoFiltroSelecionado == "Por Categoria")
-              TextField(
-                controller: descricaoController,
-                decoration: const InputDecoration(labelText: "Descrição da Categoria", border: OutlineInputBorder()),
+              DropdownButtonFormField<String>(
+                value: categoriaFiltroSelecionada,
+                decoration: const InputDecoration(
+                  labelText: "Selecione a Categoria",
+                  border: OutlineInputBorder(),
+                ),
+                items: _categorias.map((cat) {
+                  return DropdownMenuItem(value: cat, child: Text(cat));
+                }).toList(),
+                onChanged: (valor) {
+                  setState(() {
+                    categoriaFiltroSelecionada = valor;
+                    _aplicarFiltros();
+                  });
+                },
               ),
+
             const SizedBox(height: 30),
 
-            // CARDS DE RESUMO (DADOS REAIS)
             ResumoCard(
-              titulo: "Total Geral",
-              valor: "R\$ ${_totalDespesas.toStringAsFixed(2)}", // Valor dinâmico
+              titulo: "Total Filtrado",
+              valor: "R\$ ${_totalExibido.toStringAsFixed(2)}",
               corValor: Colors.red,
             ),
             
-            // Mantive os outros cards estáticos por enquanto
             const ResumoCard(
-              titulo: "Total Despesas já pagas",
-              valor: "0,00",
+              titulo: "Total Pago",
+              valor: "R\$ 0,00",
               corValor: Colors.green,
             ),
 
             const SizedBox(height: 10),
 
-            // LISTA DE DESPESAS
             Card(
               color: Colors.black87,
               child: Container(
                 width: double.infinity,
-                height: 400, // Aumentei um pouco
+                height: 400,
                 padding: const EdgeInsets.all(8),
                 child: Column(
                   children: [
@@ -157,15 +213,14 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
                     ),
                     const SizedBox(height: 10),
                     
-                    // AQUI ESTÁ A LISTVIEW REAL
                     Expanded(
-                      child: _listaDespesas.isEmpty 
-                      ? const Center(child: Text("Nenhuma despesa cadastrada", style: TextStyle(color: Colors.white70)))
+                      child: _listaExibida.isEmpty 
+                      ? const Center(child: Text("Nenhuma despesa encontrada", style: TextStyle(color: Colors.white70)))
                       : ListView.separated(
-                          itemCount: _listaDespesas.length,
+                          itemCount: _listaExibida.length,
                           separatorBuilder: (_, __) => const Divider(color: Colors.white24),
                           itemBuilder: (context, index) {
-                            final despesa = _listaDespesas[index];
+                            final despesa = _listaExibida[index];
                             return ListTile(
                               leading: CircleAvatar(
                                 backgroundColor: Colors.blueGrey,
@@ -196,18 +251,5 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
         ),
       ),
     );
-  }
-
-  // Função auxiliar para ícones
-  IconData _getIconeCategoria(String categoria) {
-    switch (categoria) {
-      case "Alimentação": return Icons.restaurant;
-      case "Transporte": return Icons.directions_car;
-      case "Moradia": return Icons.home;
-      case "Saúde": return Icons.local_hospital;
-      case "Educação": return Icons.school;
-      case "Lazer": return Icons.beach_access;
-      default: return Icons.attach_money;
-    }
   }
 }
