@@ -1,9 +1,11 @@
+import 'dart:io'; 
 import 'package:flutter/material.dart';
 import 'package:month_picker_dialog/month_picker_dialog.dart';
 import '../widgets/resumo_card.dart';
 import '../dialogs/dialog_cadastro_despesa.dart';
 import '../database/despesa_dao.dart';
 import '../models/despesa.dart';
+import 'despesa_detalhe_page.dart'; 
 
 class ExpenseListPage extends StatefulWidget {
   const ExpenseListPage({super.key});
@@ -25,13 +27,7 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
   double _totalExibido = 0.0;
 
   final List<String> _categorias = [
-    "Alimentação",
-    "Transporte",
-    "Moradia",
-    "Saúde",
-    "Educação",
-    "Lazer",
-    "Outros"
+    "Alimentação", "Transporte", "Moradia", "Saúde", "Educação", "Lazer", "Outros"
   ];
 
   @override
@@ -123,7 +119,7 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
             const SizedBox(height: 12),
             
             DropdownButtonFormField<String>(
-              value: tipoFiltroSelecionado,
+              initialValue: tipoFiltroSelecionado,
               decoration: const InputDecoration(labelText: "Tipo de Filtro", border: OutlineInputBorder()),
               items: const [
                 DropdownMenuItem(value: "Todos", child: Text("Todos")),
@@ -140,7 +136,6 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
                 });
               },
             ),
-            
             const SizedBox(height: 20),
 
             if (tipoFiltroSelecionado == "Por Mês")
@@ -167,7 +162,7 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
               )
             else if (tipoFiltroSelecionado == "Por Categoria")
               DropdownButtonFormField<String>(
-                value: categoriaFiltroSelecionada,
+                initialValue: categoriaFiltroSelecionada,
                 decoration: const InputDecoration(
                   labelText: "Selecione a Categoria",
                   border: OutlineInputBorder(),
@@ -191,12 +186,6 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
               corValor: Colors.red,
             ),
             
-            const ResumoCard(
-              titulo: "Total Pago",
-              valor: "R\$ 0,00",
-              corValor: Colors.green,
-            ),
-
             const SizedBox(height: 10),
 
             Card(
@@ -221,23 +210,41 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
                           separatorBuilder: (_, __) => const Divider(color: Colors.white24),
                           itemBuilder: (context, index) {
                             final despesa = _listaExibida[index];
-                            return ListTile(
-                              leading: CircleAvatar(
+                            
+                            Widget iconeOuFoto;
+                            if (despesa.comprovante != null && despesa.comprovante!.isNotEmpty) {
+                              iconeOuFoto = CircleAvatar(
+                                radius: 25,
+                                backgroundImage: FileImage(File(despesa.comprovante!)),
+                                onBackgroundImageError: (_,__) {}, 
+                              );
+                            } else {
+                              iconeOuFoto = CircleAvatar(
                                 backgroundColor: Colors.blueGrey,
                                 child: Icon(_getIconeCategoria(despesa.categoria), color: Colors.white),
-                              ),
+                              );
+                            }
+
+                            return ListTile(
+                              leading: iconeOuFoto,
                               title: Text(
                                 despesa.descricao,
                                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                               ),
                               subtitle: Text(
-                                "${despesa.categoria} - Vence: ${despesa.dataVencimento}",
+                                "${despesa.categoria} - ${despesa.dataVencimento}",
                                 style: const TextStyle(color: Colors.white70),
                               ),
-                              trailing: Text(
-                                "R\$ ${despesa.valor.toStringAsFixed(2)}",
-                                style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 16),
-                              ),
+                              trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white54, size: 16),
+                              
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => DespesaDetalhePage(despesa: despesa),
+                                  ),
+                                );
+                              },
                             );
                           },
                         ),

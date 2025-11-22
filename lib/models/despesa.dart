@@ -4,7 +4,7 @@ class Despesa {
   double valor;
   String dataVencimento;
   String categoria;
-  String? comprovante; // <-- ADICIONAR
+  String? comprovante; 
 
   Despesa({
     this.id,
@@ -22,7 +22,7 @@ class Despesa {
       'valor': valor,
       'dataVencimento': dataVencimento,
       'categoria': categoria,
-      'comprovante': comprovante, // <-- ADICIONAR
+      'comprovante': comprovante, 
     };
   }
 
@@ -33,7 +33,7 @@ class Despesa {
       valor: map['valor'],
       dataVencimento: map['dataVencimento'],
       categoria: map['categoria'],
-      comprovante: map['comprovante'], // <-- ADICIONAR
+      comprovante: map['comprovante'], 
     );
   }
 }

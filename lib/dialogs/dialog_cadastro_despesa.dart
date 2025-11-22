@@ -4,7 +4,6 @@ import 'package:image_picker/image_picker.dart';
 import '../models/despesa.dart';
 import '../database/despesa_dao.dart';
 
-// Alterado para retornar Future
 Future<void> mostrarDialogCadastro(BuildContext context) {
   DateTime? dataSelecionada;
   final descricaoController = TextEditingController();
@@ -14,7 +13,6 @@ Future<void> mostrarDialogCadastro(BuildContext context) {
   String? caminhoComprovante;
   final dao = DespesaDAO();
 
-  // Adicionado 'return' aqui
   return showDialog(
     context: context,
     builder: (context) {
@@ -66,7 +64,6 @@ Future<void> mostrarDialogCadastro(BuildContext context) {
                 ],
                 onChanged: (valor) => categoriaSelecionada = valor,
               ),
-              // ... Botões de anexo mantidos iguais ...
               const SizedBox(height: 12),
                Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -112,7 +109,7 @@ Future<void> mostrarDialogCadastro(BuildContext context) {
               );
               await dao.inserir(novaDespesa);
               if (!context.mounted) return;
-              Navigator.pop(context); // Fecha o dialog
+              Navigator.pop(context); 
             },
           ),
         ],
