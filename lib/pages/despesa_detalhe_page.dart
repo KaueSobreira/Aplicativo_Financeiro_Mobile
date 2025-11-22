@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart'; 
 import '../models/despesa.dart';
 import '../database/despesa_dao.dart';
 import '../dialogs/dialog_cadastro_despesa.dart';
@@ -16,6 +17,8 @@ class DespesaDetalhePage extends StatefulWidget {
 class _DespesaDetalhePageState extends State<DespesaDetalhePage> {
   late Despesa _despesaAtual;
   final DespesaDAO _dao = DespesaDAO();
+  
+  final _formatadorMoeda = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
 
   @override
   void initState() {
@@ -23,7 +26,6 @@ class _DespesaDetalhePageState extends State<DespesaDetalhePage> {
     _despesaAtual = widget.despesa;
   }
 
-  // Função para excluir
   Future<void> _confirmarExclusao() async {
     final confirmar = await showDialog<bool>(
       context: context,
@@ -40,16 +42,13 @@ class _DespesaDetalhePageState extends State<DespesaDetalhePage> {
     if (confirmar == true) {
       await _dao.excluir(_despesaAtual.id!);
       if (!mounted) return;
-      // Retorna 'true' para avisar a lista que algo mudou
       Navigator.pop(context, true);
     }
   }
 
-  // Função para editar
   Future<void> _editarDespesa() async {
     await mostrarDialogCadastro(context, despesaParaEditar: _despesaAtual);
     
-    // Recarrega o objeto do banco para atualizar a tela
     final listaAtualizada = await _dao.listar();
     final despesaRecarregada = listaAtualizada.firstWhere((d) => d.id == _despesaAtual.id, orElse: () => _despesaAtual);
 
@@ -107,7 +106,14 @@ class _DespesaDetalhePageState extends State<DespesaDetalhePage> {
                 children: [
                   _buildInfoRow("Descrição", _despesaAtual.descricao, isBold: true),
                   const Divider(),
-                  _buildInfoRow("Valor", "R\$ ${_despesaAtual.valor.toStringAsFixed(2)}", color: Colors.red, isBold: true),
+                  
+                  _buildInfoRow(
+                    "Valor", 
+                    _formatadorMoeda.format(_despesaAtual.valor), 
+                    color: Colors.red, 
+                    isBold: true
+                  ),
+                  
                   const Divider(),
                   _buildInfoRow("Categoria", _despesaAtual.categoria),
                   const Divider(),

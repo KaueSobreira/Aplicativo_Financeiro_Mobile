@@ -4,7 +4,6 @@ import 'package:image_picker/image_picker.dart';
 import '../models/despesa.dart';
 import '../database/despesa_dao.dart';
 
-// Adicionado parâmetro opcional despesaParaEditar
 Future<void> mostrarDialogCadastro(BuildContext context, {Despesa? despesaParaEditar}) {
   DateTime? dataSelecionada;
   
@@ -17,15 +16,15 @@ Future<void> mostrarDialogCadastro(BuildContext context, {Despesa? despesaParaEd
   
   final dao = DespesaDAO();
 
-  // -- Lógica de Preenchimento para Edição --
   if (despesaParaEditar != null) {
     descricaoController.text = despesaParaEditar.descricao;
-    valorController.text = despesaParaEditar.valor.toString();
+    
+    valorController.text = despesaParaEditar.valor.toString().replaceAll('.', ','); 
+
     dataController.text = despesaParaEditar.dataVencimento;
     categoriaSelecionada = despesaParaEditar.categoria;
     caminhoComprovante = despesaParaEditar.comprovante;
     
-    // Converter string de data para objeto DateTime para validação interna se necessário
     try {
       final parts = despesaParaEditar.dataVencimento.split('/');
       dataSelecionada = DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
@@ -44,12 +43,16 @@ Future<void> mostrarDialogCadastro(BuildContext context, {Despesa? despesaParaEd
               TextField(
                 controller: descricaoController,
                 decoration: const InputDecoration(hintText: "Descrição"),
+                textCapitalization: TextCapitalization.sentences,
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: valorController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(hintText: "Valor"),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  hintText: "Valor (ex: 50,00)", 
+                  prefixText: "R\$ "
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -71,7 +74,7 @@ Future<void> mostrarDialogCadastro(BuildContext context, {Despesa? despesaParaEd
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: categoriaSelecionada, // Importante para mostrar o valor atual
+                initialValue: categoriaSelecionada,
                 decoration: const InputDecoration(
                   hintText: "Categoria",
                   border: OutlineInputBorder(),
@@ -123,11 +126,13 @@ Future<void> mostrarDialogCadastro(BuildContext context, {Despesa? despesaParaEd
               if (descricaoController.text.isEmpty || valorController.text.isEmpty || dataController.text.isEmpty || categoriaSelecionada == null) {
                 return;
               }
+              String valorString = valorController.text.replaceAll(',', '.');
+              double valorFinal = double.tryParse(valorString) ?? 0.0;
 
               final despesa = Despesa(
-                id: despesaParaEditar?.id, // Mantém o ID se for edição
+                id: despesaParaEditar?.id, 
                 descricao: descricaoController.text,
-                valor: double.tryParse(valorController.text) ?? 0,
+                valor: valorFinal,
                 dataVencimento: dataController.text,
                 categoria: categoriaSelecionada!,
                 comprovante: caminhoComprovante,

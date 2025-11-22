@@ -1,11 +1,12 @@
-import 'dart:io'; 
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:month_picker_dialog/month_picker_dialog.dart';
+import 'package:intl/intl.dart'; 
 import '../widgets/resumo_card.dart';
 import '../dialogs/dialog_cadastro_despesa.dart';
 import '../database/despesa_dao.dart';
 import '../models/despesa.dart';
-import 'despesa_detalhe_page.dart'; 
+import 'despesa_detalhe_page.dart';
 
 class ExpenseListPage extends StatefulWidget {
   const ExpenseListPage({super.key});
@@ -25,6 +26,10 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
   List<Despesa> _listaExibida = [];
   final DespesaDAO _dao = DespesaDAO();
   double _totalExibido = 0.0;
+
+  final _formatadorMoeda = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+  final _formatadorData = DateFormat('dd/MM/yyyy');
+  final _formatadorMes = DateFormat('MMMM / yyyy', 'pt_BR'); 
 
   final List<String> _categorias = [
     "Alimentação", "Transporte", "Moradia", "Saúde", "Educação", "Lazer", "Outros"
@@ -50,10 +55,10 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
     if (tipoFiltroSelecionado == "Por Mês" && dataFiltragem != null) {
       temp = temp.where((d) {
         try {
-          final parts = d.dataVencimento.split('/');
-          final mes = int.parse(parts[1]);
-          final ano = int.parse(parts[2]);
-          return mes == dataFiltragem!.month && ano == dataFiltragem!.year;
+          final dataDespesa = _formatadorData.parse(d.dataVencimento);
+          
+          return dataDespesa.month == dataFiltragem!.month && 
+                 dataDespesa.year == dataFiltragem!.year;
         } catch (e) {
           return false;
         }
@@ -77,11 +82,6 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
   void dispose() {
     dataControllerFiltragem.dispose();
     super.dispose();
-  }
-
-  String _mesNome(int mes) {
-    const nomes = ["", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-    return nomes[mes];
   }
 
   IconData _getIconeCategoria(String categoria) {
@@ -154,7 +154,7 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
                   if (mesSelecionado != null) {
                     setState(() {
                       dataFiltragem = mesSelecionado;
-                      dataControllerFiltragem.text = "${_mesNome(mesSelecionado.month)} / ${mesSelecionado.year}";
+                      dataControllerFiltragem.text = _formatadorMes.format(mesSelecionado).toUpperCase();
                       _aplicarFiltros();
                     });
                   }
@@ -182,7 +182,7 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
 
             ResumoCard(
               titulo: "Total Filtrado",
-              valor: "R\$ ${_totalExibido.toStringAsFixed(2)}",
+              valor: _formatadorMoeda.format(_totalExibido),
               corValor: Colors.red,
             ),
             
@@ -216,7 +216,7 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
                               iconeOuFoto = CircleAvatar(
                                 radius: 25,
                                 backgroundImage: FileImage(File(despesa.comprovante!)),
-                                onBackgroundImageError: (_,__) {}, 
+                                onBackgroundImageError: (_,__) {},
                               );
                             } else {
                               iconeOuFoto = CircleAvatar(
@@ -236,7 +236,6 @@ class _ExpenseListPageState extends State<ExpenseListPage> {
                                 style: const TextStyle(color: Colors.white70),
                               ),
                               trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white54, size: 16),
-                              
                               onTap: () async {
                                 await Navigator.push(
                                   context,
